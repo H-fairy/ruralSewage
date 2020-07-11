@@ -16,7 +16,8 @@
               </p>
               <div class="fr">
                 <div class="fl site-select">
-                  <RadioGroup v-model="siteId" type="button" size="large" @on-change="selectSite"><Radio :label="item.id" :title="siteId == item.id ?'GIS定位':'选择站点'" >{{item.name}}</Radio>
+                  <RadioGroup v-model="siteId" type="button" size="large" @on-change="selectSite">
+                    <Radio v-for="(item, index) in siteList" :key="index" :label="item.id" :title="siteId == item.id ?'GIS定位':'选择站点'" >{{item.name}}</Radio>
                 </RadioGroup>
                 </div>
                 <!-- <div class="fl"  @click="settingModal = true">
