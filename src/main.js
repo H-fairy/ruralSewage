@@ -9,9 +9,12 @@ import 'view-design/dist/styles/iview.css';
 import { HappyScroll } from 'vue-happy-scroll'
 import 'vue-happy-scroll/docs/happy-scroll.css'
 // import '~/assets/css/index.css';
+import echarts from 'echarts';
 
 Vue.use(vueRouter);
 Vue.use(ViewUI);
+// Vue.use(echarts); 
+Vue.prototype.$echarts = echarts
 Vue.config.productionTip = false
 Vue.component('happy-scroll', HappyScroll)
 /* eslint-disable no-new */

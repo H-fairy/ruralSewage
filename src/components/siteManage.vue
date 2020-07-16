@@ -2,42 +2,49 @@
   <div class="site-manage">
     <!-- 自然村 -->
     <div class="top-select">
+      <!-- <div id="main" style="width: 400px;height: 400px"></div> -->
       <i class="line"></i>
-      <Tabs :animated="false" @on-click="tabClick" name="villageId" :value="villageId">
+      <Tabs :animated="true" @on-click="tabClick" name="villageId" :value="villageId">
         <TabPane :label="item.name" v-for="(item, index) in villageList" :key="index" tab="villageId" :name="item.id">
           <div class="tab-content" v-if="siteList.length>0">
             <!-- 站点 -->
             <div class="cl">
               <p class="fl tab-message b-block cl" style="border-top:1px solid rgba(56, 220, 201, 0.3);">
-                <b>运行日期:{{siteMessage.operatedate}}</b>
-                <b>工艺:{{siteMessage.technology}}</b>
-                <b>处理规模:{{siteMessage.processingscale}}</b>
-                <b>出水标准:{{siteMessage.effluentstandard}}</b>
+                <b @click="configurationFlag = true">运行日期:{{siteMessage.operatedate}}</b>
+                <b @click="configurationFlag = true" v-if="showUnpus">工艺:{{siteMessage.technology}}</b>
+                <b @click="configurationFlag = true">处理规模:{{siteMessage.processingscale}}</b>
+                <b @click="configurationFlag = true" v-if="showUnpus">出水标准:{{siteMessage.effluentstandard}}</b>
               </p>
               <div class="fr">
                 <div class="fl site-select">
                   <RadioGroup v-model="siteId" type="button" size="large" @on-change="selectSite">
-                    <Radio v-for="(item, index) in siteList" :key="index" :label="item.id" :title="siteId == item.id ?'GIS定位':'选择站点'" >{{item.name}}</Radio>
+                    <span  v-for="(item, index) in siteList" :key="index" @click="aa(item.id)"><Radio :label="item.id" :title="siteId == item.id ?'GIS定位':'选择站点'" >{{item.name}}</Radio></span>
                 </RadioGroup>
                 </div>
                 <!-- <div class="fl"  @click="settingModal = true">
                   <i class="setting-icon"></i>
                 </div> -->
-                <div class="fl" v-if="showUnpus" @click="videoModalFlag"><i class="setting-icon video-icon"></i></div>
+                <div class="fl" v-if="showUnpus" @click="videoModalFlag" title="视频监控"><i class="setting-icon video-icon"></i></div>
+                <div class="fl" @click="getEchartsValue('electric')" title="站点曲线"><i class="setting-icon zhexian-icon"></i></div>
+                <div class="fl" @click="configurationFlag = true" title="站点工况"><i class="setting-icon zhexiantu-icon"></i></div>
               </div>
             </div>
-            <div style="text-align:left;position:relative;top: -54px;" class="b-block cl" v-if="showUnpus">
-              <b :title="'当前瞬时水量:'+mointorList.nowWater+'m³/h'">当前瞬时水量: {{mointorList.nowWater}} m³/h </b>
-              <b :title="'昨日总产水量:'+mointorList.yesterdayWater+'m³'">昨日总产水量:{{mointorList.yesterdayWater}} m³ </b>
-              <b :title="'昨日总耗电量:'+mointorList.yesterdayEnergy+'KWh'">昨日总耗电量: {{mointorList.yesterdayEnergy}}KWh</b>
-              <b :title="'吨水位能耗:'+mointorList.energyWater+'KWh/m³'"> 吨水能耗: {{mointorList.energyWater}}KWh/m³</b>
+            <div class="b-block cl" v-if="showUnpus" style="position:relative;top:-2px;">
+              <b :title="'当前瞬时水量:'+mointorList.nowWater+'m³/h'" @click="getEchartsValue('shunshi')">当前瞬时水量: {{mointorList.nowWater}} m³/h </b>
+              <b :title="'昨日总产水量:'+mointorList.yesterdayWater+'m³'" @click="getEchartsValue('water')">昨日总产水量:{{mointorList.yesterdayWater}} m³ </b>
+              <b :title="'昨日总耗电量:'+mointorList.yesterdayEnergy+'KWh'" @click="getEchartsValue('electric')">昨日总耗电量: {{mointorList.yesterdayEnergy}}KWh</b>
+              <b :title="'吨水位能耗:'+mointorList.energyWater+'KWh/m³'" @click="getEchartsValue('tonWater')"> 吨水能耗: {{mointorList.energyWater}}KWh/m³</b>
             </div>
-            <div style="text-align:left;position:relative;top: -54px;" class="b-block cl" v-else>
-              <b :title="'昨日总耗电量:'+mointorList.yesterdayEnergy+'KWh'">昨日总耗电量: {{mointorList.yesterdayEnergy}}KWh</b>
+            <div style="" class="b-block cl" style="position:relative;top:-2px;" v-else>
+              <b :title="'液位:'+mointorList.liquidLevel+'m'" @click="getEchartsValue('yewei')">液位: {{mointorList.liquidLevel}}m</b>
+              <b :title="'昨日总耗电量:'+mointorList.yesterdayEnergy+'KWh'" @click="getEchartsValue('electric')">昨日总耗电量: {{mointorList.yesterdayEnergy}}KWh</b>
             </div>
             <!-- 监测指标 -->
             <div class="cl tab-center">
-              <div class="fl tab-conf" ><iframe :src="diagramUrl" frameborder="0" style="height:100% ;width: 100%;text-align:center" id="blur_iframe"></iframe></div>
+              <div class="fl tab-conf" >
+                <iframe :src="diagramUrl" frameborder="0" style="height:100% ;width: 100%;text-align:center" id="blur_iframe" v-show="configurationFlag" ></iframe>
+              </div>
+
               <div class="fr equipment-tabs">
                 <i class="line"></i>
                 <Tabs name="name1" vlaue="name1">
@@ -109,6 +116,13 @@
           <div v-else></div>
         </TabPane>
       </Tabs>
+      <div v-show="!configurationFlag" class="tab-echart">
+        <Select v-model="selectChart" style="width:200px" @on-change="selectChartChange">
+            <Option v-for="item in chartList" :value="item.value" :key="item.value">{{ item.label }}</Option>
+        </Select>
+        <div  id="main" v-show="selectChart!='shunshi'"></div>  
+        <div id="main1" v-show="selectChart=='shunshi'"></div>
+      </div> 
       <div class="top-search" >
         <Select
             prefix="ios-search"
@@ -215,10 +229,14 @@
 </template>
 <script>
 import { get, post } from "@/request/api";
+import echarts from 'echarts';
 export default {
   name: '',
   data () {
     return {
+      chartList: [],
+      selectChart: '',
+      configurationFlag: true,
       value:null,
       showUnpus: true,// 是否展示摄像头
       topSearch:null,// 按站点搜索查询
@@ -308,7 +326,14 @@ export default {
       searchSiteId: null,//搜索站点id
       searchVillageId: null,//搜索自然村id
       searchAdminId: null, //搜索行政村id
-      equipStatusList:[]
+      equipStatusList:[],
+      echartData:[],
+      restypename: null,
+      jsonData: null,
+      xData:[],
+      shunshiDataAmount:[],
+      legendList:[],
+      chartTitle: null,
     }
   },
   filters: {
@@ -338,23 +363,12 @@ export default {
     }
     //获取站点
     this.GetVillage();
-    //
     this.addClickEventListener();
     this.getSiteList();
-    // let self = this;
-    // this.$nextTick(function () {
-    //   document.addEventListener('keyup', function (e) {
-    //     //此处填写你的业务逻辑即可
-    //     if (e.keyCode == 27) {
-    //       if(self.equipDetails == true){
-    //         self.equipDetails == false;
-    //       }
-    //     }
-    //   })
-    // })
   },
   watch:{
     $route(to,from){
+      this.configurationFlag = true;
       if(this.$route.query.homeFlag == 'gis'){
         this.homeFlag = true;
         this.searchSiteId = this.$route.query.siteid;//搜索站点id
@@ -374,6 +388,393 @@ export default {
     }
   },
   methods:{
+    aa(id){
+      if(id == this.siteId){
+        // parent.index.setActiveName({
+        //   name:'zhjk',
+        //   targetUrl:'/wes/gis/index'
+        // })
+        // setTimeout(()=>{
+        //   parent.window.myweswebFrame.setLocationByTypeAndValueAndZoom(this.restypename, this.siteId, 12)
+        // }, 2000)
+        // this.configurationFlag = false
+        // location.href="http://baidu.com";
+        if(this.homeFlag == true){
+          window.parent.postMessage({
+            close: true
+          },'*')
+        }
+        window.parent.postMessage({
+          targetGis:true,
+          type:this.restypename,
+          value: this.siteId
+        },'*')
+      }
+
+      
+    },
+    getEchartsValue(val){
+      console.log(this.siteId,1)
+      this.configurationFlag = false;
+      this.selectChart = val;
+      this.getEcharts(val, this.siteId)
+    },
+    selectChartChange(val){
+      this.getEcharts(val, this.siteId);
+    },
+    drawChart() {
+      this.$nextTick(() => {
+      // 基于准备好的dom，初始化echarts实例
+      let a = document.getElementById("main")
+      let myChart = this.$echarts.init(document.getElementById("main"));
+      let myChart1 = this.$echarts.init(document.getElementById("main1"));
+
+let option = {
+    tooltip: {
+        trigger: 'axis',
+        position: function (pt) {
+            return [pt[0], '10%'];
+        }
+    },
+    xAxis: {
+        type: 'category',
+        boundaryGap: false,
+        data: this.xData,
+        axisLine: {
+          lineStyle: {
+              color: '#D9FDF8', // 颜色
+              width: 1 // 粗细
+          }
+        },
+        
+        // itemStyle:{
+        //   color:'#D9FDF8'
+        // }
+    },
+    yAxis: {
+        type: 'value',
+        boundaryGap: [0, '10%'],
+        axisLine: {
+          lineStyle: {
+              color: '#D9FDF8', // 颜色
+              width: 1 // 粗细
+          }
+        },
+        splitLine: {
+          show: true,
+          lineStyle:{
+            color: ['#315070'],
+            width: 1,
+            type: 'solid'
+          }
+        }
+        
+        // splitLine: {
+        //   show: true, 
+        //   lineStyle: {
+        //       //设置刻度线粗度(粗的宽度)
+        //       width:1,
+        //       //颜色数组，数组数量要比刻度线数量大才能不循环使用
+        //       color: ['rgba(0, 0, 0, 0)','#EDF9F9','#EDF9F9','#EDF9F9','#EDF9F9','#EDF9F9','#EDF9F9','#EDF9F9','#EDF9F9']
+        //   }
+        // }
+
+    },
+    title: {
+      text: this.chartTitle,
+      textStyle: { //图例文字的样式
+          color: '#fff',
+          fontSize: 14,
+          fontWeight:'normal',
+          lineHeight:50
+        }
+      },
+    grid: {
+        left: '20px',
+        right: '50px',
+        bottom: '50px',
+        containLabel: true
+    },
+    dataZoom: [{
+        type: 'inside',
+        start: 0,
+        end: 100,
+        
+
+    }, {
+        start: 0,
+        end: 10,
+        handleIcon: 'M10.7,11.9v-1.3H9.3v1.3c-4.9,0.3-8.8,4.4-8.8,9.4c0,5,3.9,9.1,8.8,9.4v1.3h1.3v-1.3c4.9-0.3,8.8-4.4,8.8-9.4C19.5,16.3,15.6,12.2,10.7,11.9z M13.3,24.4H6.7V23h6.6V24.4z M13.3,19.6H6.7v-1.4h6.6V19.6z',
+        handleSize: '60%',
+        handleColor: '#44D7B6',
+        handleSize: 18,
+        handleStyle: {
+          borderColor: '#44D7B6',
+          shadowBlur: 4,
+          shadowOffsetX: 1,
+          shadowOffsetY: 1,
+          shadowColor: '#44D7B6'
+        },
+    }],
+    series: [
+        {
+            // name: '水量',
+            type: 'line',
+            smooth: true,
+            symbol: 'none',
+            sampling: 'average',
+            itemStyle: {
+                color: 'rgba(24,111,237,0.5)'
+            },
+            areaStyle: {
+                color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{
+                    offset: 0,
+                    color: '#0DCDD5'
+                }, {
+                    offset: 1,
+                    color: '#186FED'
+                }])
+            },
+            data: this.echartData
+        }
+    ]
+};
+let option1 = {
+  dataZoom: [{
+        type: 'inside',
+        start: 0,
+        end: 100,
+        
+
+    }, {
+        start: 0,
+        end: 10,
+        handleIcon: 'M10.7,11.9v-1.3H9.3v1.3c-4.9,0.3-8.8,4.4-8.8,9.4c0,5,3.9,9.1,8.8,9.4v1.3h1.3v-1.3c4.9-0.3,8.8-4.4,8.8-9.4C19.5,16.3,15.6,12.2,10.7,11.9z M13.3,24.4H6.7V23h6.6V24.4z M13.3,19.6H6.7v-1.4h6.6V19.6z',
+        handleSize: '60%',
+        handleColor: '#44D7B6',
+        handleSize: 18,
+        handleStyle: {
+          borderColor: '#44D7B6',
+          shadowBlur: 4,
+          shadowOffsetX: 1,
+          shadowOffsetY: 1,
+          shadowColor: '#44D7B6'
+        },
+    }],
+    title: {
+      text: this.chartTitle,
+      textStyle: { //图例文字的样式
+          color: '#fff',
+          fontSize: 14,
+          fontWeight:'normal',
+          lineHeight:50
+        }
+      },
+    tooltip: {
+        trigger: 'axis',
+        axisPointer: {
+            type: 'cross',
+            label: {
+                backgroundColor: '#6a7985'
+            }
+        }
+    },
+    legend: {
+        data: this.legendList,
+        textStyle: { //图例文字的样式
+          color: '#fff',
+          fontSize: 16
+        }
+
+    },
+    grid: {
+        left: '20px',
+        right: '50px',
+        bottom: '50px',
+        containLabel: true
+    },
+    xAxis: {
+        type: 'category',
+        boundaryGap: false,
+        data: this.xData,
+        axisLine: {
+          lineStyle: {
+              color: '#D9FDF8', // 颜色
+              width: 1 // 粗细
+          }
+        }
+        // itemStyle:{
+        //   color:'#D9FDF8'
+        // }
+    },
+    yAxis: {
+        type: 'value',
+        boundaryGap: [0, '10%'],
+        axisLine: {
+          lineStyle: {
+              color: '#D9FDF8', // 颜色
+              width: 1 // 粗细
+          }
+        },
+        splitLine: {
+          show: true,
+          lineStyle:{
+            color: ['#315070'],
+            width: 1,
+            type: 'solid'
+          }
+        }
+    },
+    series: this.shunshiDataAmount
+};
+
+      // 使用刚指定的配置项和数据显示图表。
+      // if(this.selectChart == 'shunshi'){
+        myChart.setOption(option)
+      // }else{
+        myChart1.setOption(option1);
+      // }
+     
+      })
+    },
+    /**
+     * 获取曲线图接口
+     */
+    getEcharts(type,id){
+      let date = new Date();
+      let seperator1 = "-";
+      let year = date.getFullYear();
+      let month = date.getMonth() + 1;
+      let strDate = date.getDate();
+      if (month >= 1 && month <= 9) {
+          month = "0" + month;
+      }
+      if (strDate >= 0 && strDate <= 9) {
+          strDate = "0" + strDate;
+      }
+      let currentdate = year + seperator1 + month + seperator1 + strDate;
+      // console.log(currentdate)
+      let lw = new Date(date - 1000 * 60 * 60 * 24 * 60);
+      if(this.selectChart == 'shunshi' || this.selectChart == 'yewei'){
+        lw = new Date(date - 1000 * 60 * 60 * 24 * 30)
+      }
+      let lastY = lw.getFullYear();
+      let lastM = lw.getMonth()+1;
+      let lastD = lw.getDate();
+      let startdate=lastY+"-"+(lastM<10 ? "0" + lastM : lastM)+"-"+(lastD<10 ? "0"+ lastD : lastD);//三十天之前日期
+    // console.log(startdate)
+      let params = {
+        ids: id,
+        start: startdate,
+        end: currentdate,
+        resid: null
+      };
+      let url ;
+      if(this.selectChart == 'electric'){
+        url = '/wes/collectAnaysis/getequipmentenergybystartandend'
+        this.chartTitle = '电量(kwh)'
+      }else if(this.selectChart == 'water') {
+         url = '/wes/collectAnaysis/getwaterenergybystartandend'
+         this.chartTitle = '水量(m³)'
+      }else if(this.selectChart == 'tonWater') {
+         url = '/wes/collectAnaysis/getton'
+         this.chartTitle = '吨水能耗(kwh/m³)'
+      }else if(this.selectChart == 'yewei') {
+         url = '/wes/zhjy/queryinfobys'
+         this.chartTitle = '液位(m)'
+        //  params.resid = id;
+      }else if(this.selectChart == 'shunshi') {
+         url = '/wes/zhjy/queryinfobys'
+         params.ids = id;
+         this.chartTitle = '瞬时流量(m³/h)'
+      }
+      // /wes/collectAnaysis/getequipmentenergybystartandend 能耗
+      // /wes/collectAnaysis/getwaterenergybystartandend 水量
+      // /wes/collectAnaysis/getton 吨耗
+      // /wes/zhjy/queryinfobys 泵站液位
+      // /wes/zhjy/queryinfobys 处理站瞬时
+      get(url, params).then(response => {
+
+        if(response.data == {} ||response.data == []){
+          return;
+        }
+        // this.echartData = response.data;
+        
+        let list = [];
+        this.xData = [];
+        if(this.selectChart == 'electric' || this.selectChart == 'water' || this.selectChart == 'tonWater') {
+          this.legendList = [];
+          for(let i = 0; i<response.data.length;i++) {
+            list.push(response.data[i].amount)
+            this.xData.push(response.data[i].recordTime)
+          }
+          // for(let i = 0; i<response.data.length;i++) {
+            
+          // }
+          this.echartData = list;
+        } else if(this.selectChart == 'yewei'){
+          this.legendList = []
+          // console.log(Object.keys(response.data));
+          // console.log(response.data[Object.keys(response.data)]);
+          var yeweiList = response.data[Object.keys(response.data)];
+          var yeweiDateList = [];
+          var yeweiDataList = [];
+          for(var i = 0; i<yeweiList.length; i++){
+            yeweiDateList.push(yeweiList[i].time);
+            yeweiDataList.push(yeweiList[i].avg_sx);
+          }
+          this.echartData = yeweiDataList;
+          this.xData = yeweiDateList;
+        }else{
+          // response.data[0][Object.keys(response.data[0])
+          var shunshiList = [];
+          this.shunshiDataAmount = [];
+          // var shunshiList0 = response.data[0][Object.keys(response.data[0])];
+          var shunshiDateList = [];
+          // for(let i = 0;i<shunshiList0.length;i++){
+          //   shunshiDateList.push(shunshiList0[i].time)
+          // }
+          var colors = ['#5BD483', '#FFDB90', '#23E8FF', '#FF788C', '#2F73FF','#5BD433', '#FFDB00', '#23E81F', '#FF7a8C', '#2F7FFF']
+          for(let i in response.data) {
+            shunshiDateList.push(i);
+            this.legendList.push(i);
+            // response.data[0]
+            var obj = {}
+            var color = colors[Math.floor(Math.random()*10)];
+           obj.name =  i;
+           obj.type = 'line';
+           obj.stack = '总量';
+           obj.areaStyle = {normal: {
+					  color: color //改变区域颜色
+        }};
+        obj.itemStyle = {
+          normal: {
+					color: color, //改变折线点的颜色
+					lineStyle: {
+						color: color //改变折线颜色
+					}
+				}
+        }
+
+
+           obj.data = [];
+           for(let j = 0;j<response.data[i].length;j++) {
+             obj.data.push(response.data[i][j].avg_sx);
+           }
+          this.shunshiDataAmount.push(obj);
+          
+          } 
+          for(var i = 0; i<response.data[shunshiDateList[0]].length;i++){
+            shunshiDateList.push(response.data[shunshiDateList[0]][i].time)
+          }
+          this.xData = shunshiDateList;
+        }
+        this.drawChart();
+        
+
+
+      })
+    },
     /**
      * 返回
      */
@@ -417,6 +818,7 @@ export default {
     selectSiteValue(value) {
       this.$nextTick(function () {
         this.topSearch = null;
+        this.configurationFlag = true;
       })
       if(value){
         let valueJson = JSON.parse(value);
@@ -431,7 +833,7 @@ export default {
     addClickEventListener(){
       let _this =this;
       window.addEventListener('message',function(e){
-        var id = e.data.clickId
+        let id = e.data.clickId
         if(e.data.clickId != undefined || e.data.clickId != null){
           _this.diagramClick(id);
         }
@@ -440,7 +842,7 @@ export default {
     videoTabClick(val){
       this.videoTabValue = val;
       if(val == 1){
-        var root = process.env.API;
+        let root = process.env.API;
         let wrapBox= document.getElementById('detail-message');
         let contentBox = wrapBox.childNodes[2].childNodes[0];
 
@@ -509,7 +911,7 @@ export default {
      * 获取监控图片
      */
     getPhoto(id){
-       var root = process.env.API;
+       let root = process.env.API;
        this.photoUrl = root+'/wes/video/history?point=' + id;
 
     },
@@ -543,14 +945,14 @@ export default {
       get('/wes/zhjy/queryDataByResId',params).then(response => {
         let dataJson = response.data;
         let arr = Object.keys(dataJson)
-        console.log(dataJson)
+        // console.log(dataJson)
         if(arr.length<=0){
           this.$Message.info('暂时没有站点！');
           return;
 
         }
         let dataArray = [];
-        for (var i in dataJson) {
+        for (let i in dataJson) {
           dataArray.push({id:i,name:dataJson[i]});
         }
         this.villageList = dataArray;
@@ -583,7 +985,7 @@ export default {
       get('/wes/zhjy/queryDataByResId',params).then(response => {
         let dataJson = response.data;
         let dataArray = [];
-        for (var i in dataJson) {
+        for (let i in dataJson) {
           dataArray.push({id:i,name:dataJson[i]});
         }
         this.siteList = dataArray;
@@ -609,6 +1011,9 @@ export default {
         this.getDiagramUrl(id);
         this.getVideoId(id)
         this.getEquipStatus(id);
+        // this.getEcharts(id);
+        // this.drawChart();
+        
       },
     /**
      * 获取摄像头id
@@ -618,7 +1023,7 @@ export default {
         resid: id
       };
       get('/wes/zhjy/queryDataByResId', params).then(response => {
-        for (var i in response.data) {
+        for (let i in response.data) {
           if (response.data[i] === '摄像头') {
             this.videoId = i;
             // return;
@@ -652,6 +1057,7 @@ export default {
 
 
     tabClick(id){
+      this.configurationFlag = true;
       // console.log(id)
       this.villageFlagId = id;
       this.villageId = id;
@@ -682,7 +1088,7 @@ export default {
         this.$nextTick(function () {
           this.equipStatusList = response.data.listrturn;
         })
-        console.log(this.equipStatusList.length,1)
+        // console.log(this.equipStatusList.length,1)
       })
     },
     /**
@@ -690,14 +1096,41 @@ export default {
      */
     getMessage(id) {
       let params = {resid: id};
-      get('wes/zhjy/queryStationByResId',params).then(response => {
+      get('/wes/zhjy/queryStationByResId',params).then(response => {
         this.siteMessage = response.data;
         // console.log(this.siteMessage,1)
+        this.restypename = this.siteMessage.restypename;
         if(this.siteMessage.restypename == 'pus') {
           this.showUnpus = false;
         }else{
           this.showUnpus = true;
         }
+        if(this.siteMessage.restypetitle == '处理站') {
+          this.chartList = [{
+            label:'水量曲线',
+            value:'water'
+          },{
+            label:'计算能耗曲线',
+            value:'electric'
+          },{
+            label:'吨水能耗曲线',
+            value:'tonWater'
+          },{
+            label:'瞬时水量曲线',
+            value:'shunshi'
+          }];
+          
+        }else{
+          this.chartList = [{
+            label:'计算能耗曲线',
+            value:'electric'
+          },{
+            label:'液位曲线',
+            value:'yewei'
+          }];
+        }
+        this.selectChart = 'electric';
+        // this.getEcharts(this.selectChart, id);
       })
     },
     /**
@@ -713,7 +1146,7 @@ export default {
      * 获取组态图url
      */
     getDiagramUrl(id){
-      var root = process.env.API;
+      let root = process.env.API;
       let params = {resid: id};
       this.diagramUrl = root +'/diagram/diagraminstantiation/index?resid=' + id;
     }
@@ -736,10 +1169,32 @@ body { min-height: 100%;background: @background-color; padding-right: 0!importan
   .ivu-modal-mask{
     background: rgba(4,6,19,.6);
   }
+  .tab-echart{
+        width: 1200px;
+        height: 720px;
+        position: absolute;
+        top: 170px;
+        left:0;
+        text-align:left;
+        .ivu-select{
+          margin-left: 20px;
+        }
+        #main{
+          width: 1200px;
+          height: 630px;
+          text-align:left;
+        }
+        #main1{
+          width: 1200px;
+          height: 630px;
+          text-align:left;
+        }
+      }
   .tab-content{
     padding:10px 20px;
     .b-block{
       b{
+        cursor: pointer;
         float: left;
         width: 180px;
         text-align: left;
@@ -760,6 +1215,7 @@ body { min-height: 100%;background: @background-color; padding-right: 0!importan
     .tab-message{
       color: @primary-color;
       line-height: 40px;
+      // height: 40px;
     }
     .setting-icon{
       display: inline-block;
@@ -777,10 +1233,22 @@ body { min-height: 100%;background: @background-color; padding-right: 0!importan
     .video-icon{
       background-image: url(../assets/images/sxt2.png);
     }
+    .zhexiantu-icon{
+      background-image: url(../assets/images/zhexiantu.png);
+    }
+    .zhexian-icon{
+      background-image: url(../assets/images/zhexian.png);
+    }
   }
   .ivu-select-selection{
     background: none;
     border-color: @primary-color!important;
+  }
+  .ivu-select-selected-value{
+    color:#fff!important;
+    height: 40px!important;
+    line-height: 40px!important;
+    text-align:left;
   }
   .ivu-select-dropdown{
     background: @background-color;
@@ -912,7 +1380,7 @@ body { min-height: 100%;background: @background-color; padding-right: 0!importan
   }
   .tab-center{
     position: relative;
-    top: -40px;
+    // top: -40px;
     .tab-conf{
       width: calc(100% - 390px);
       height: 650px;
@@ -922,7 +1390,7 @@ body { min-height: 100%;background: @background-color; padding-right: 0!importan
     .equipment-tabs{
       width: 380px;
       position: relative;
-      top: -70px;
+      // top: -50px;
       .ivu-tabs-nav{
         margin: 0;
       }
@@ -981,7 +1449,7 @@ body { min-height: 100%;background: @background-color; padding-right: 0!importan
             width:15px;
             height: 15px;
             border-radius: 50%;
-            background: #b8b8b8;
+            background: #666666;
           }
           .equipment-launch{
             background: #29CE5D;
@@ -1199,4 +1667,134 @@ body { min-height: 100%;background: @background-color; padding-right: 0!importan
     }
   }
 }
+@media (max-width: 1920px){
+  // .tab-echart{
+  //   width: 1400px!important;
+  //   #main{
+  //     width: 1400px!important;
+  //   }
+  //   #main1{
+  //     width: 1400px!important;
+  //   }
+  // }
+}
+@media (width: 1920px){
+  // .tab-echart{
+  //   width: 1400px!important;
+  //   #main{
+  //     width: 1400px!important;
+  //   }
+  //   #main1{
+  //     width: 1400px!important;
+  //   }
+  // }
+}
+@media (max-width: 1680px){
+  // .tab-echart{
+  //   width: 1100px!important;
+  //   #main{
+  //     width:1100px!important;
+  //   }
+  //   #main1{
+  //     width: 1100px!important;
+  //   }
+  // }
+}
+@media screen and  (max-width: 1440px){
+  // .tab-echart{
+  //   width: 800px!important;
+  //   #main{
+  //     width: 800px!important;
+  //   }
+  //   #main1{
+  //     width: 800px!important;
+  //   }
+  // }
+}
+
+// @media screen and (max-width: 1366px){
+//   .tab-echart{
+//     width: 700px!important;
+//     #main{
+//       width: 700px!important;
+//     }
+//     #main1{
+//       width: 700px!important;
+//     }
+//   }
+// }
+@media (min-width: 1280px) {
+.tab-echart{
+    width: 700px!important;
+    #main{
+      width: 700px!important;
+    }
+    #main1{
+      width: 700px!important;
+    }
+  }
+} /*>=1280的设备*/
+@media (min-width: 800px) {
+
+.tab-echart{
+    width: 500px!important;
+    #main{
+      width: 500px!important;
+    }
+    #main1{
+      width: 500px!important;
+    }
+  }
+}
+
+@media (min-width: 1166px) {
+
+.tab-echart{
+    width: 700px!important;
+    #main{
+      width: 700px!important;
+    }
+    #main1{
+      width: 700px!important;
+    }
+  }
+}
+
+@media (min-width: 1240px) {
+   .tab-echart{
+    width: 800px!important;
+    #main{
+      width: 800px!important;
+    }
+    #main1{
+      width: 800px!important;
+    }
+  }
+} 
+
+@media (min-width: 1480px) {
+  .tab-echart{
+    width: 1100px!important;
+    #main{
+      width:1100px!important;
+    }
+    #main1{
+      width: 1100px!important;
+    }
+  }
+} 
+@media (min-width: 1700px) {
+  .tab-echart{
+    width: 1400px!important;
+    #main{
+      width: 1400px!important;
+    }
+    #main1{
+      width: 1400px!important;
+    }
+  }
+} 
+
+
+
 </style>

@@ -4,7 +4,7 @@ var root = process.env.API;
  // 创建axios实例
  const service = axios.create({
   baseURL: root,
-  timeout: 15000, // 请求超时时间
+  timeout: 150000, // 请求超时时间
   headers: {
     'Content-Type': 'application/x-www-form-urlencoded;charset=utf-8'
   }
